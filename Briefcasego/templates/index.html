@@ -1,0 +1,697 @@
+{% load static %}
+{%include 'base.html'%}
+{%block index%}
+  {% if not request.session.business_name %}
+    <section class="hero">
+      <h1>Welcome to <span style="color:coral;">Briefcasego</span></h1>
+      <p>Your premier partner for business solutions. We empower individuals and organizations to achieve their full potential.</p>
+      <div class="actions">
+        <button class="learn" style="background: transparent;">Learn More ➤</button>
+        <button class="contact" onclick="toggleLoginForm()" style="background-color: coral;">Connect</button>
+      </div>
+    </section>
+  {%else%}
+    <div class="notification-wrapper">
+      <a href="{%url 'contract_notifications'%}">
+        <button id="circleBtn"><i class="fas fa-bell"></i></button>
+        {% if notification_count > 0 %}
+          <span class="notification-count">{{ notification_count }}</span>
+        {% endif %}
+      </a>
+    </div>
+    <section class="partner-section">
+      <div class="container">
+        <h2 class="section-title">Create New Contract</h2>
+        <p class="section-subtitle">with chose better partner</p>
+        <div class="search-bar">
+          <button class="search-btn" onclick=showForm()>Create</button>
+          <button class="search-btn" onclick=showAnnounceForm()><i class="fas fa-bullhorn"></i> Announce</button>
+          {% if contract.counterparty_is_paid == True %}
+            <button class="search-btn" onclick="showUpContractDetailsForIpfsandDownload()"><i class="fas fa-info"></i>
+ Details</button>
+          {% endif %}
+          
+          
+          
+
+        </div>
+      </div>
+      <div class="contract_details_for_download" id="contract_details_for_download">
+          {% if contract.ipfs_cid %}
+            <h3 class="ipfs_link">IPFS:</h3>
+            <a href="https://w3s.link/ipfs/{{ contract.ipfs_cid }}" target="_blank">
+              <button id="open_ipfs_link"><i class="fas fa-link"></i>Open link</button>
+            <a>
+            <a href="{% url 'download_contract' contract.id %}"><button id="open_ipfs_link"><i class="fas fa-download"></i>Download Contract</button></a>
+          {% endif %}
+      </div>
+    </section>
+    <div id="overlay"></div>
+    <div id="contractForm">
+      <form method="POST" action="{% url 'send_contract' %}" enctype="multipart/form-data" id="walletForm">
+        {% csrf_token %}
+        <label for="partnerEmail">Partner Email:</label>
+        <input type="email" id="partnerEmail" name="email" placeholder="Enter Email u negosiate with:" required>
+        <label for="price">Contract Fees:</label>
+        <input type="number" id="price" name="price" required placeholder="20$" value="20">
+        <label for="duration" id="duration_label">Contract Duration:</label>
+        <select id="duration" name="duration" required>
+          <option value="3_months">3 Months</option>
+          <option value="6_months">6 Months</option>
+          <option value="1_year">1 Year</option>
+          <option value="1_5_years">1.5 Years</option>
+          <option value="2_years">2 Years</option>
+          <option value="5_years">5 Years</option>
+        </select>
+        <label for="contractType">Contract Type:</label>
+        <select id="contractType" name="contract_type" required>
+          <option value="forward">Forward</option>
+          <option value="option_call">Option Call</option>
+          <!--<option value="interest rate swaps">Interest Rate Swaps</option>!-->
+          <option value="credit default swaps">Credit Default Swaps (CDS)</option>
+          <option value="naked cds">Naked CDS</option>
+        </select>
+        <div id="credit_event_section" style="display:none; margin-top: 10px;">
+          <label for="credit_event">Credit Event:</label>
+          <select id="credit_event" name="credit_event">
+            <option value="Failure to Pay">Failure to Pay</option>
+            <option value="Restructuring">Restructuring</option>
+            <option value="Bankruptcy">Bankruptcy</option>
+          </select>
+        </div>
+        <div id="marginField"></div>
+        <div id="dynamicFields"></div>
+        <button type="submit"><i class="fas fa-handshake"></i> Negosiate</button>
+      </form>
+  </div>
+  <div id="AnnounceForm">
+    <form method="POST" action="{%url 'announce'%}">
+      {% csrf_token %}
+      <label for="contractType">Contract Type:</label>
+      <select id="contractType" name="contract_type" required>
+        <option value="future">Future</option>
+        <option value="forward">Forward</option>
+        <option value="interest rate swaps" name="interest rate swaps">Interest Rate Swaps</option>
+        <option value="credit default swaps">Credit Default Swaps (CDS)</option>
+        <option value="naked cds">Naked CDS</option>
+      </select>
+      <label for="Conditions">Contract Conditions:</label>
+      <textarea id="conditions" name="conditions" required></textarea>
+      <button type="submit"><i class="fas fa-bullhorn"></i> Announce</button>
+    </form>
+  </div> 
+  {% endif %}
+  <section id="login-section" class="login-section" style="display: none;">
+  <div class="login-container">
+    <h2>Login</h2>
+    <form method="POST" action="{% url 'login' %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+
+      <button type="submit" class="btn-login">Login</button>
+    </form>
+  </div>
+  </section>
+  <section class="features" id="features">
+    <h2>Features</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <h3>📝 ISDA Agreement</h3>
+        <p>Securely manage and review your International Swaps and Derivatives Agreements in one place.</p>
+      </div>
+      <div class="feature-card">
+        <h3>📧 Confirm Emails</h3>
+        <p>Automated email confirmations for contracts, deals, and client interactions—ensuring transparency.</p>
+      </div>
+      <div class="feature-card">
+        <h3>🔐 Digital Signature</h3>
+        <p>Legally bind agreements with encrypted, verifiable digital signatures in seconds.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Business Signup Form -->
+  <section id="businessSignup" class="signup-form">
+    <h2>Business Registration</h2>
+    <form method='POST' action=''>
+      {% csrf_token %}
+      <label for="company">Company Name</label>
+      <input type="text" id="company" name="company_name" required>
+
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required>
+      
+      <label for="password">Password</label>
+      <input type="password" name="password" id="password" required>
+
+      <label for="zip">ZIP Code</label>
+      <input type="text" id="zip" name="zip_code" required>
+
+      <label for="address">Address</label>
+      <input type="text" id="address" name="address" required>
+
+      <label for="country">Country</label>
+      <input type="text" id="country" name="country" required>
+
+      <label for="city">City</label>
+      <input type="text" id="city" name="city" required>
+
+      <label for="workers">Number of Employees</label>
+      <input type="number" id="workers" name="number_of_employees" required>
+
+      <button type="submit">Register</button>
+    </form>
+  </section>
+  <script>
+    // Switch to Ethereum Mainnet
+    async function switchToEthereumMainnet(){
+      try{
+        await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x1' }], 
+        });
+
+      }catch (switchError) {
+        if (switchError.code === 4902){
+          console.log("Ethereum Mainnet is not available in MetaMask. Please add it manually.");
+        }else {
+          console.error("Failed to switch network:", switchError);
+        }
+      }
+    }
+    // Check for MetaMask
+    document.getElementById('walletForm').addEventListener('submit', async function(event){
+      event.preventDefault();
+      //disallow if send contract to your email
+      const myEmail = "{{ myEmail }}";
+      const emailInput = document.getElementById("partnerEmail");
+      const partnerEmail = emailInput.value.trim().toLowerCase();
+      if (partnerEmail === myEmail.toLowerCase()){
+        event.preventDefault();
+        alert("You cannot send a contract to your own email.");
+        emailInput.style.border = "2px solid red";
+        return;
+      }
+      emailInput.style.border = "";
+        if (typeof window.ethereum !== 'undefined'){
+          try{
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            console.log("Connected account:", accounts[0]);
+            await switchToEthereumMainnet()
+            if (accounts && accounts.length > 0){
+              const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+              const data = await response.json();
+              const ethPriceUSD = data.ethereum.usd;
+              const usdAmount = 10;
+              const ethAmount = usdAmount / ethPriceUSD;
+              const weiAmount = BigInt(Math.floor(ethAmount * 1e18));
+              const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+              const sender = accounts[0];
+              try {
+                const txHash = await window.ethereum.request({
+                  method: 'eth_sendTransaction',
+                  params: [{
+                  from: sender,
+                  to: '0xFBE81455B9D5e35047343c9D3db8c404C793a06D',
+                  value: '0x' + weiAmount.toString(16) 
+                  }]
+                });
+                console.log("transaction has been sent", txHash);
+                // Now submit the form manually
+                document.getElementById('walletForm').submit();
+                
+
+              }catch (err) {
+                console.error("Fail to send transaction", err);
+              }
+
+            }
+          }catch (err){
+            console.log("MetaMask connection failed:", err);
+            alert("Failed to connect wallet. Please try again.");
+          }
+       
+        }else{
+            window.open('https://metamask.io/', '_blank');
+        }
+    });
+    document.getElementById("contractType").addEventListener("change", function () {
+    const dynamicFields = document.getElementById("dynamicFields");
+    dynamicFields.innerHTML = "";
+    const marginField = document.getElementById("marginField");
+    marginField.innerHTML = "";
+    // FORWARD
+    if (this.value === "forward") {
+        const duration_label = document.getElementById('duration_label')
+        const duration = document.getElementById('duration')
+        duration.style.display = 'None'
+        duration_label.style.display = 'None'
+        const label = document.createElement("label");
+        label.setAttribute("for", "margin");
+        label.textContent = "Margin:";
+        const label2 = document.createElement("label");
+        label2.setAttribute("for", "margin");
+        label2.textContent = "Settelment Type:";
+        const input = document.createElement("input");
+        const select = document.createElement("select");
+        select.name = "settelment_type";
+        select.id = "settelment_type";
+        select.required = true;
+        option1 = document.createElement("option");
+        option1.value = "Physical";
+        option1.textContent = "Physical";
+        option2 = document.createElement("option");
+        option2.value = "Cash";
+        option2.textContent = "Cash";
+        select.appendChild(option1)
+        select.appendChild(option2)
+        input.type = "text";
+        input.name = "margin";
+        input.id = "margin";
+        input.value = "2%";
+        input.disabled = true;
+        const label3 = document.createElement("label");
+        label3.setAttribute("for", "margin");
+        label3.textContent = "Maturity:";
+        const select2 = document.createElement("select");
+        select2.name = "payment_frequency";
+        select2.id = "payment_frequency";
+        select2.required = true;
+        const optionA = document.createElement("option");
+        const optionB = document.createElement("option");
+        const optionC = document.createElement("option");
+        optionA.value = "3months";
+        optionA.textContent = "3 Months";
+        optionB.value = "6months";
+        optionB.textContent = "6 Months";
+        optionC.value = "1year";
+        optionC.textContent = "1 Year";
+        select2.appendChild(optionA)
+        select2.appendChild(optionB)
+        select2.appendChild(optionC)
+        const label4 = document.createElement("label");
+        label4.setAttribute("for", "margin");
+        label4.textContent = "Asset:";
+        const input2 = document.createElement("input");
+        input2.type = "text";
+        input2.name = "underlying_asset";
+        input2.id = "underlying_asset";
+        input2.required = true;
+        const label5 = document.createElement("label");
+        label5.setAttribute("for", "Quantity");
+        label5.textContent = "Quantity:";
+        const input3 = document.createElement("input");
+        input3.type = "number";
+        input3.name = "quantity";
+        input3.id = "quantity";
+        input3.required = true;
+        const label6 = document.createElement("label");
+        label6.setAttribute("for", "Forward Price");
+        label6.textContent = "Forward Price:";
+         const input4 = document.createElement("input");
+        input4.type = "number";
+        input4.name = "forward_price";
+        input4.id = "forward_price";
+        input4.required = true;
+        marginField.appendChild(label);
+        marginField.appendChild(input);
+        marginField.appendChild(label2);
+        marginField.appendChild(select);
+        marginField.appendChild(label3);
+        marginField.appendChild(select2);
+        marginField.appendChild(label4);
+        marginField.appendChild(input2);
+        marginField.appendChild(label5);
+        marginField.appendChild(input3);
+        marginField.appendChild(label6);
+        marginField.appendChild(input4);
+    }
+    // Credit Default Swaps(CDS)
+    if (this.value === "credit default swaps") {
+        const duration_label = document.getElementById("duration_label")
+        duration_label.textContent = 'Payment Frequency:'
+        const duration = document.getElementById("duration")
+        const optionsToShow = ["3_months", "6_months", "1_year"];
+        Array.from(duration.options).forEach(option => {
+          if (!optionsToShow.includes(option.value)) {
+            option.style.display = "none"; // Hide option
+          }
+        });
+        const creditEventSection = document.getElementById("credit_event_section");
+        creditEventSection.style.display = "block";
+        const label = document.createElement("label");
+        label.setAttribute("for", "reference_entity");
+        label.textContent = "Reference Entity:";
+        
+        const input = document.createElement("input");
+        input.type = "text";
+        input.name = "reference_entity";
+        input.id = "reference_entity";
+        input.placeholder = "Enter Company Name";
+        input.required = true;
+        const label2 = document.createElement("label");
+        label2.setAttribute("for", "cds_file");
+        label2.textContent = "Reference Obligations:";
+
+        const label3 = document.createElement("label");
+        label3.setAttribute("for", "cds_file");
+        label3.textContent = "National Amount:";
+        const input3 = document.createElement("input");
+        input3.type = "number";
+        input3.name = "national_amount";
+        input3.id = "national_amount";
+        input3.placeholder = 'Enter National Amount:'
+        input3.required = true;
+        const input2 = document.createElement("input");
+        input2.type = "file";
+        input2.name = "cds_bonds";
+        input2.id = "cds_file";
+        input2.accept = "application/pdf";
+        input2.required = true;
+        const label4 = document.createElement("label");
+        label4.setAttribute("for", "Spread-bps_label");
+        label4.textContent = "Spread-bps:";
+        const input4 = document.createElement("input");
+        input4.type = "number";
+        input4.name = "spread_input";
+        input4.id = "spread_input";
+        input4.placeholder = 'Enter Spread /y ,e.g:150bps :'
+        input4.required = true;
+        const label5 = document.createElement("label");
+        label5.setAttribute("for", "maturity");
+        label5.textContent = "Maturity:";
+        const label6 = document.createElement("label");
+        label6.setAttribute("for", "settelment");
+        label6.textContent = "Settelment Type:";
+        const select = document.createElement("select");
+        select.name = "payment_frequency";
+        select.id = "payment_frequency";
+        select.required = true;
+        const select2 = document.createElement("select");
+        select2.name = "settelment_type";
+        select2.id = "settelment_type";
+        select2.required = true;
+        const option6 = document.createElement("option");
+        option6.value = "Physical";
+        option6.textContent = "Physical";
+        const option7 = document.createElement("option");
+        option7.value = "Cash";
+        option7.textContent = "Cash";
+        select2.appendChild(option6)
+        select2.appendChild(option7)
+        const optionA = document.createElement("option");
+        const optionB = document.createElement("option");
+        const optionC = document.createElement("option");
+        optionA.value = "";
+        optionA.textContent = "1 Year";
+        optionB.value = "3year";
+        optionB.textContent = "3 Year";
+        optionC.value = "5year";
+        optionC.textContent = "5 Year";
+        select.appendChild(optionA)
+        select.appendChild(optionB)
+        select.appendChild(optionC)
+        dynamicFields.appendChild(label);
+        dynamicFields.appendChild(input);
+        dynamicFields.appendChild(label2);
+        dynamicFields.appendChild(input2);
+        dynamicFields.appendChild(label3);
+        dynamicFields.appendChild(input3);
+        dynamicFields.appendChild(label4);
+        dynamicFields.appendChild(input4);
+        dynamicFields.appendChild(label5);
+        dynamicFields.appendChild(select);
+        dynamicFields.appendChild(label6);
+        dynamicFields.appendChild(select2);
+    }
+    // NAKED CDS
+    if (this.value === "naked cds") {
+        const duration_label = document.getElementById("duration_label")
+        duration_label.textContent = 'Payment Frequency:'
+        const duration = document.getElementById("duration")
+        const optionsToShow = ["3_months", "6_months", "1_year"];
+        Array.from(duration.options).forEach(option => {
+          if (!optionsToShow.includes(option.value)) {
+            option.style.display = "none"; // Hide option
+          }
+        });
+        const label5 = document.createElement("label");
+        label5.setAttribute("for", "maturity");
+        label5.textContent = "Maturity:";
+        const label = document.createElement("label");
+        label.setAttribute("for", "reference_entity");
+        label.textContent = "Reference Entity:";
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.name = "reference_entity";
+        input.id = "reference_entity";
+        input.required = true;
+        const select = document.createElement("select");
+        select.name = "payment_frequency";
+        select.id = "payment_frequency";
+         const optionA = document.createElement("option");
+        const optionB = document.createElement("option");
+        const optionC = document.createElement("option");
+        optionA.value = "";
+        optionA.textContent = "1 Year";
+        optionB.value = "3year";
+        optionB.textContent = "3 Year";
+        optionC.value = "5year";
+        optionC.textContent = "5 Year";
+        select.appendChild(optionA)
+        select.appendChild(optionB)
+        select.appendChild(optionC)
+        const label3 = document.createElement("label");
+        label3.setAttribute("for", "cds_file");
+        label3.textContent = "National Amount:";
+        const input3 = document.createElement("input");
+        input3.type = "number";
+        input3.name = "national_amount";
+        input3.id = "national_amount";
+        input3.placeholder = 'Enter National Amount:'
+        input3.required = true;
+        const label4 = document.createElement("label");
+        label4.setAttribute("for", "Spread-bps_label");
+        label4.textContent = "Spread-bps:";
+        const input4 = document.createElement("input");
+        input4.type = "number";
+        input4.name = "spread_input";
+        input4.id = "spread_input";
+        input4.placeholder = 'Enter Spread /y ,e.g:150bps :'
+        input4.required = true;
+        dynamicFields.appendChild(label);
+        dynamicFields.appendChild(input);
+        dynamicFields.appendChild(label5);
+        dynamicFields.appendChild(select);
+        dynamicFields.appendChild(label3);
+        dynamicFields.appendChild(input3);
+        dynamicFields.appendChild(label4);
+        dynamicFields.appendChild(input4);
+    }
+    // IRS(interest rate swaps)
+    if (this.value === "interest rate swaps") {
+        const label = document.createElement("label");
+        label.setAttribute("for", "rate_type");
+        label.textContent = "Rate Type:";
+
+        const select = document.createElement("select");
+        select.name = "rate_type";
+        select.id = "rate_type";
+        select.required = true;
+        select.onchange = FloatConst_toogle
+
+        const option1 = document.createElement("option");
+        option1.value = "const";
+        option1.textContent = "Const";
+        option1.selected = true;
+        const option2 = document.createElement("option");
+        option2.value = "float";
+        option2.textContent = "Float";
+        select.appendChild(option1);
+        select.appendChild(option2);
+        const label2 = document.createElement('label');
+        label2.textContent = 'Payment Frequency:';
+        label2.setAttribute('for', 'payment_frequency');
+        const select2 = document.createElement('select');
+        select2.name = 'payment_frequency';
+        select2.id = 'payment_frequency';
+        select2.required = true;
+        const optionA = document.createElement("option");
+        const optionB = document.createElement("option");
+        const optionC = document.createElement("option");
+        optionA.value = "3months";
+        optionA.textContent = "3 Months";
+        optionB.value = "6months";
+        optionB.textContent = "6 Months";
+        optionC.value = "1year";
+        optionC.textContent = "1 Year";
+        select2.appendChild(optionA)
+        select2.appendChild(optionB)
+        select2.appendChild(optionC)
+        dynamicFields.appendChild(label);
+        dynamicFields.appendChild(select);
+        dynamicFields.appendChild(label2);
+        dynamicFields.appendChild(select2);
+        select.onchange();
+      }
+      //Option Call
+      if (this.value === "option_call"){
+        const duration = document.getElementById('duration')
+        duration.style.display = 'None'
+        const duration2 = document.getElementById('duration_label')
+        duration2.style.display = 'None'
+        const label = document.createElement("label");
+        label.setAttribute("for", "underlying_asset_label");
+        label.textContent = "Underlying Asset:";
+        const label2 = document.createElement("label");
+        label2.setAttribute("for", "strike_price_label");
+        label2.textContent = "Strike Price:";
+        const label3 = document.createElement("label");
+        label3.setAttribute("for", "expiration_date_label");
+        label3.textContent = "Expiration Date:";
+        const label4 = document.createElement("label");
+        label4.setAttribute("for", "option_type_label");
+        label4.textContent = "Option Type:";
+        const label5 = document.createElement("label");
+        label5.setAttribute("for", "third_part_label");
+        label5.textContent = "Third Part:";
+        const label6 = document.createElement("label");
+        label6.setAttribute("for", "settelment_type_label");
+        label6.textContent = "Settelment Type:";
+        const input = document.createElement("input");
+        input.type = "text";
+        input.name = "underlying_asset";
+        input.id = "underlying_asset";
+        input.required = true;
+        const input2 = document.createElement("input");
+        input2.type = "number";
+        input2.name = "strike_price";
+        input2.id = "strike_price";
+        input2.required = true;
+        const input3 = document.createElement("input");
+        input3.type = "date";
+        input3.name = "expiration_date";
+        input3.id = "expiration_date";
+        input3.required = true;
+        const select = document.createElement("select");
+        select.name = "option_type";
+        select.id = "option_type";
+        select.required = true;
+        const select2 = document.createElement("select");
+        select2.name = "third_part";
+        select2.id = "third_part";
+        select2.required = true;
+        const select3 = document.createElement("select");
+        select3.name = "settelment_type";
+        select3.id = "settelment_type";
+        select3.required = true;
+
+        const option1 = document.createElement("option");
+        option1.value = "American";
+        option1.textContent = "American";
+        const option2 = document.createElement("option");
+        option2.value = "European";
+        option2.textContent = "European";
+        const option3 = document.createElement("option");
+        option3.value = "Asian";
+        option3.textContent = "Asian";
+        const option4 = document.createElement("option");
+        option4.value = "YES";
+        option4.textContent = "YES";
+        const option5 = document.createElement("option");
+        option5.value = "NO";
+        option5.textContent = "NO";
+        const option6 = document.createElement("option");
+        option6.value = "Physical";
+        option6.textContent = "Physical";
+        const option7 = document.createElement("option");
+        option7.value = "Cash";
+        option7.textContent = "Cash";
+        select.appendChild(option1)
+        select.appendChild(option2)
+        select.appendChild(option3)
+        select2.appendChild(option4)
+        select2.appendChild(option5)
+        select3.appendChild(option6)
+        select3.appendChild(option7)
+        dynamicFields.appendChild(label);
+        dynamicFields.appendChild(input);
+        dynamicFields.appendChild(label2);
+        dynamicFields.appendChild(input2);
+        dynamicFields.appendChild(label3);
+        dynamicFields.appendChild(input3);
+        dynamicFields.appendChild(label4);
+        dynamicFields.appendChild(select);
+        dynamicFields.appendChild(label5);
+        dynamicFields.appendChild(select2);
+        dynamicFields.appendChild(label6);
+        dynamicFields.appendChild(select3);
+        
+
+      }
+
+  });
+  function FloatConst_toogle(){
+     const dynamicFields = document.getElementById("dynamicFields");
+     const value = document.getElementById("rate_type").value;
+     if (value === "const"){
+        const label = document.createElement("label");
+        label.textContent = 'Treasury bond yield / Coast of Fund:';
+        label.setAttribute('for', 'Treasury_bond_yield_Coast_of_Fund_Label');
+        const input = document.createElement("input");
+        input.type = "number";
+        input.name = "Treasury_bond_yield_Coast_of_Fund";
+        input.id = "Treasury_bond_yield_Coast_of_Fund";
+        input.required = true;
+        const labelA = document.createElement("label");
+        labelA.textContent = 'Spread:';
+        labelA.setAttribute('for', ' Spread');
+        const inputB = document.createElement("input");
+        inputB.type = "number";
+        inputB.name = "spread";
+        inputB.id = "Spread";
+        inputB.required = true;
+        dynamicFields.appendChild(label);
+        dynamicFields.appendChild(input);
+        dynamicFields.appendChild(labelA);
+        dynamicFields.appendChild(inputB);
+     }
+     if (value === "float"){
+        const label3 = document.createElement("label");
+        label3.textContent = 'Sofr/Libor:';
+        label3.setAttribute('for', 'sofr_label');
+        const input = document.createElement("input");
+        input.type = "number";
+        input.name = "sofr_input";
+        input.id = "sofr_input";
+        input.required = true;
+        const label4 = document.createElement("label");
+        label4.textContent = 'Spread:';
+        label4.setAttribute('for', 'spread_label');
+        const input2 = document.createElement("input");
+        input2.type = "number";
+        input2.name = "spread_input";
+        input2.id = "spread_input";
+        input2.required = true;
+        dynamicFields.appendChild(label3);
+        dynamicFields.appendChild(input);
+        dynamicFields.appendChild(label4);
+        dynamicFields.appendChild(input2);
+        
+     }
+
+  }
+  document.getElementById('price').disabled = true;
+  </script>
+
+{%endblock index%}
+{%include 'footer.html'%}

@@ -1,0 +1,17 @@
+{%load static%}
+{%block navbar%}
+<header>
+    <div class="logo"><img src="{%static 'img/logo.svg'%}">Briefcasego</div>
+    <nav>
+      <a href="{%url 'home'%}"><i class="fas fa-home"></i> Home</a>
+      {% if not request.session.business_name %}
+        <a href="{%url 'about'%}">About</a>
+        <button class="btn btn-business" onclick="toggleBusinessForm()" style="background-color: coral;">🏢 Sign Up (Business)</button>
+      {%else%}
+      <a href="{%url 'newsfeed'%}">Feeds</a>
+      <a href="{% url 'logout' %}" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      {% endif %}
+      <button class="btn-mode" onclick="toggleMode()">🌙</button>
+    </nav>
+</header>
+{%endblock navbar%}

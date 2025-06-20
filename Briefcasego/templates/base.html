@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Briefcasego</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="icon" href="{% static 'img/favicon.ico' %}" type="image/x-icon">
+</head>
+<body>
+    {%include 'navbar.html'%}
+    {%block navbar%}{%endblock navbar%}
+    {%block index%}{%endblock index%}
+    {%block about%}{%endblock about%}
+    {%block newsfeed%}{%endblock newsfeed%}
+    {%block notification%}{%endblock notification%}
+<script src="{% static 'js/main.js' %}"></script>
+</body>
